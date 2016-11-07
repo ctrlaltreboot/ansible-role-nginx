@@ -36,7 +36,7 @@ vagrant:
         append_platform_to_hostname: yes
 
 ansible:
-  playbook: tests/playbook.yml
+  playbook: tests/test.yml
 
 verifier:
   name: testinfra
