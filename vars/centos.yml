@@ -1,0 +1,12 @@
+---
+# location of main config file
+nginx_config_file: /etc/nginx/nginx.conf
+
+# where includes happen
+nginx_confd_path: /etc/nginx/conf.d
+
+# where ssl certs would be placed
+nginx_ssl_path: /etc/nginx/ssl
+
+# the base path for extra directories
+nginx_userd_path: /etc/nginx/user.d/

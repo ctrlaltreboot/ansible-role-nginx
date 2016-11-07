@@ -1,0 +1,12 @@
+---
+- hosts: all
+
+  vars:
+    - nginx_config_src: files/nginx.conf
+    - nginx_confd_src: files/vhosts
+    - nginx_confd_items: ['vhost.conf']
+    - nginx_ssl_src: files/ssl
+    - nginx_ssl_items: ['test-ssl']
+
+  roles:
+    - { role: ansible-role-nginx }

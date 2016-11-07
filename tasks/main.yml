@@ -1,0 +1,109 @@
+---
+- name: Include variables
+  include_vars: vars/centos.yml
+
+- name: Enable official nginx repo
+  template:
+    src: nginx.repo.j2
+    dest: /etc/yum.repos.d/nginx.repo
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Install nginx
+  yum:
+    name: "{{ nginx_package_name }}"
+    state: installed
+    enablerepo: nginx
+
+- name: Copy user nginx config
+  copy:
+    src: "{{ nginx_config_src }}"
+    dest: "{{ nginx_config_file }}"
+    mode: '0640'
+    owner: 'root'
+    group: 'root'
+  notify:
+    - reload nginx
+
+- name: Delete original files if any
+  file: path={{ item }} state=absent
+  with_items:
+    - "{{ nginx_confd_path }}"
+    - "{{ nginx_ssl_path }}"
+    - "{{ nginx_userd_path }}"
+
+- name: Create conf.d directory
+  file:
+    path: "{{ nginx_confd_path }}"
+    mode: '0750'
+    owner: 'root'
+    group: 'root'
+    state: directory
+    recurse: yes
+
+- name: Copy conf.d items
+  copy:
+    src: "{{ nginx_confd_src }}/{{ item }}"
+    dest: "{{ nginx_confd_path }}"
+  with_items: "{{ nginx_confd_items }}"
+  notify: reload nginx
+
+- name: Create SSL directory
+  file:
+    path: "{{ nginx_ssl_path }}"
+    mode: '0700'
+    owner: 'root'
+    group: 'root'
+    state: directory
+
+- name: Copy SSL items
+  copy:
+    src: "{{ nginx_ssl_src }}/{{ item }}"
+    dest: "{{ nginx_ssl_path }}"
+  with_items: "{{ nginx_ssl_items }}"
+  notify: reload nginx
+
+- name: Create user.d directory
+  file:
+    path: "{{ nginx_ssl_path }}"
+    mode: '0750'
+    owner: 'root'
+    group: 'root'
+    state: directory
+  when: nginx_has_userd
+
+- name: Copy userd items
+  copy:
+    src: "{{ nginx_userd_src }}/{{ item }}"
+    dest: "{{ nginx_userd_path }}"
+  with_items: "{{ nginx_userd_items }}"
+  notify: reload nginx
+  when: nginx_has_userd
+
+- name: Install packages needed to interact with SELinux
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - policycoreutils-python
+    - libselinux-python
+
+- name: Set selinux to permissive
+  selinux: policy=targeted state=permissive
+  when: ansible_selinux.status == "enabled"
+
+- name: Set httpd_t domain to permissive
+  selinux_permissive: name=httpd_t permissive=true
+  when: ansible_selinux.status == "enabled"
+
+- name: Set selinux to enforcing
+  selinux: policy=targeted state=enforcing
+  when: ansible_selinux.status == "enabled"
+
+- name: Restart systemd nginx
+  command: systemctl restart nginx.service
+  when: ansible_service_mgr == "systemd"
+
+- name: Ensure nginx is running and enabled
+  service: name=nginx state=running enabled=true

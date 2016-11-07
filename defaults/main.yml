@@ -1,0 +1,19 @@
+---
+# the package name to be installed
+nginx_package_name: "nginx"
+
+# delete originals?
+
+## override me in playbooks!
+# nginx_config_src: nginx.conf
+
+# nginx_confd_src: vhosts
+# nginx_confd_items: []
+
+# nginx_ssl_src: ssl
+# nginx_ssl_items: []
+
+# a user can create extra configs elsewhere (i.e: for stream includes)
+nginx_has_userd: no
+nginx_userd_items: []
+# nginx_userd_src: user.d
